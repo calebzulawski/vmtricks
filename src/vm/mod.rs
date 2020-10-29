@@ -3,9 +3,15 @@
 #[cfg(unix)]
 mod unix;
 
+#[cfg(windows)]
+mod windows;
+
 mod implementation {
     #[cfg(unix)]
     pub use super::unix::MirroredAllocation;
+
+    #[cfg(windows)]
+    pub use super::windows::MirroredAllocation;
 }
 
 pub struct MirroredAllocation<T>(implementation::MirroredAllocation<T>);

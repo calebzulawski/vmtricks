@@ -3,7 +3,7 @@ name: Build
 on: [push]
 
 jobs:
-  test:
+  native-tier1:
     strategy:
       matrix:
         version:
@@ -14,7 +14,7 @@ jobs:
         os:
           - macos-latest
           - ubuntu-latest
-          #- windows-latest
+          - windows-latest
 
     runs-on: ${{ matrix.os }}
     
@@ -75,7 +75,15 @@ jobs:
 
 
   lint:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        version:
+          - nightly
+        os:
+          - macos-latest
+          - ubuntu-latest
+          - windows-latest
+    runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v1
     - name: Install toolchain

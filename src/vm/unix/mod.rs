@@ -1,7 +1,7 @@
 mod shm_open_anonymous;
 use nix::Result;
 
-pub fn allocation_granularity() -> usize {
+pub fn page_size() -> usize {
     use nix::unistd::{sysconf, SysconfVar};
     sysconf(SysconfVar::PAGE_SIZE).unwrap().unwrap() as usize
 }
@@ -25,7 +25,7 @@ impl<T> MirroredAllocation<T> {
             })
         } else {
             // Determine the appropriate size.  Must be a multiple of page size and type size.
-            let granularity = lcm(allocation_granularity(), core::mem::size_of::<T>());
+            let granularity = lcm(page_size(), core::mem::size_of::<T>());
             let size = div_ceil(size, granularity)
                 .checked_mul(granularity)
                 .unwrap();

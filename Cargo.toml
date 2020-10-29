@@ -5,6 +5,11 @@ authors = ["Caleb Zulawski <caleb.zulawski@gmail.com>"]
 edition = "2018"
 
 [dependencies]
+num-integer = "0.1"
+
+[target.'cfg(unix)'.dependencies]
 libc = "0.2"
 nix = "0.19"
-num-integer = "0.1"
+
+[target.'cfg(windows)'.dependencies]
+winapi = { version = "0.3", features = ["winbase", "winnt", "handleapi", "sysinfoapi", "errhandlingapi"] }
