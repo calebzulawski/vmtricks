@@ -41,8 +41,7 @@ mod test {
     #[test]
     fn default() {
         let mirrored = MirroredAllocation::<u8>::default();
-        assert_eq!(mirrored.as_mut_ptr(), std::ptr::null_mut());
-        assert_eq!(mirrored.len(), 0);
+        assert!(mirrored.as_mut_ptr().is_null());
         assert!(mirrored.is_empty());
     }
 
@@ -50,9 +49,8 @@ mod test {
     fn assorted_sizes() {
         fn test_impl(size: usize) {
             let mirrored = MirroredAllocation::<u8>::new(size).unwrap();
-            assert!(mirrored.as_mut_ptr() != std::ptr::null_mut());
+            assert!(!mirrored.as_mut_ptr().is_null());
             assert!(mirrored.len() >= size);
-            assert!(!mirrored.is_empty());
         }
 
         test_impl(100);
