@@ -1,9 +1,9 @@
 [package]
-name = "vmtricks"
+name = "vrb"
 version = "0.1.0"
 authors = ["Caleb Zulawski <caleb.zulawski@gmail.com>"]
 edition = "2018"
 
 [dependencies]
 libc = "0.2"
-once_cell = "1"
+nix = "0.19"
