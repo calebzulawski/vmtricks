@@ -7,3 +7,4 @@ edition = "2018"
 [dependencies]
 libc = "0.2"
 nix = "0.19"
+num-integer = "0.1"
