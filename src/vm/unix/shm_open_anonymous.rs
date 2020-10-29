@@ -72,7 +72,7 @@ pub fn shm_open_anonymous() -> Result<FileHandle> {
         };
         use std::ffi::CStr;
         let filename = CStr::from_bytes_with_nul(b"shm-vrb\0").unwrap();
-        match memfd_create(filename, MemFdCreateFlag::MFD_CLOEXEC).map(|fd| FileHandle(fd)) {
+        match memfd_create(filename, MemFdCreateFlag::MFD_CLOEXEC).map(FileHandle) {
             Err(Error::Sys(Errno::ENOSYS)) => shm_open_anonymous_posix(),
             value => value,
         }
