@@ -3,8 +3,22 @@
 use nix::Result;
 use std::os::unix::io::RawFd;
 
+pub struct FileHandle(RawFd);
+
+impl FileHandle {
+    pub fn as_fd(&self) -> RawFd {
+        self.0
+    }
+}
+
+impl Drop for FileHandle {
+    fn drop(&mut self) {
+        let _ = nix::unistd::close(self.0);
+    }
+}
+
 #[cfg(not(target_os = "freebsd"))]
-fn shm_open_anonymous_posix() -> Result<RawFd> {
+fn shm_open_anonymous_posix() -> Result<FileHandle> {
     use nix::{
         errno::Errno,
         fcntl::OFlag,
@@ -37,7 +51,7 @@ fn shm_open_anonymous_posix() -> Result<RawFd> {
                     let _ = close(fd);
                     err
                 })?;
-                return Ok(fd);
+                return Ok(FileHandle(fd));
             }
             Err(Error::Sys(Errno::EEXIST)) => continue,
             error => {
@@ -48,7 +62,7 @@ fn shm_open_anonymous_posix() -> Result<RawFd> {
     Err(Errno::EEXIST.into())
 }
 
-pub fn shm_open_anonymous() -> Result<RawFd> {
+pub fn shm_open_anonymous() -> Result<FileHandle> {
     #[cfg(target_os = "linux")]
     {
         use nix::{
@@ -58,7 +72,7 @@ pub fn shm_open_anonymous() -> Result<RawFd> {
         };
         use std::ffi::CStr;
         let filename = CStr::from_bytes_with_nul(b"shm-vrb\0").unwrap();
-        match memfd_create(filename, MemFdCreateFlag::MFD_CLOEXEC) {
+        match memfd_create(filename, MemFdCreateFlag::MFD_CLOEXEC).map(|fd| FileHandle(fd)) {
             Err(Error::Sys(Errno::ENOSYS)) => shm_open_anonymous_posix(),
             value => value,
         }
@@ -80,7 +94,6 @@ mod test {
     #[test]
     fn shm_open_anonymous() {
         let fd = super::shm_open_anonymous().unwrap();
-        assert!(fd != -1);
-        nix::unistd::close(fd).unwrap();
+        assert!(fd.as_fd() != -1);
     }
 }
