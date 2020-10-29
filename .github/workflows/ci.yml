@@ -1,0 +1,96 @@
+name: Build
+
+on: [push]
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        version:
+          - 1.45.0
+          - stable
+          - beta
+          - nightly
+        os:
+          - macos-latest
+          - ubuntu-latest
+          #- windows-latest
+
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+    - uses: actions/checkout@v1
+    - name: Install toolchain
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: ${{ matrix.version }}
+        override: true
+        profile: minimal
+    - name: Run tests
+      shell: bash
+      run: cargo test --verbose
+
+
+  cross-tier1:
+    strategy:
+      matrix:
+        target:
+        - aarch64-linux-android
+        os:
+        - ubuntu-latest
+        include:
+        - target: aarch64-apple-ios
+          os: macos-latest
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Install cross
+      run: cargo install cross
+    - name: Run tests
+      run: |
+        cross +nightly test
+
+
+  cross-tier2:
+    strategy:
+      matrix:
+        target:
+        - x86_64-sun-solaris
+        - x86_64-unknown-dragonfly
+        - x86_64-unknown-netbsd
+        os:
+        - ubuntu-latest
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Install cross
+      run: cargo install cross
+    - name: Run tests
+      run: |
+        cross +nightly build
+
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: Install toolchain
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        override: true
+        profile: minimal
+        components: clippy, rustfmt
+    - name: Clippy lint
+      run: cargo clippy --all-targets -- -D warnings
+    - name: Check formatting
+      run: cargo fmt -- --check
+    - name: Deadlinks
+      run: |
+        cargo install cargo-deadlinks
+        cargo doc
+        cargo deadlinks -v --check-http
