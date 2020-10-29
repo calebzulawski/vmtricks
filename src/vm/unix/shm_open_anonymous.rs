@@ -52,10 +52,13 @@ pub fn shm_open_anonymous() -> Result<RawFd> {
     #[cfg(target_os = "linux")]
     {
         use nix::{
-            error::{Errno, Error},
-            sys::memfd::{memfd_create, MemFdCreateFlag::MFD_CLOEXEC},
+            errno::Errno,
+            sys::memfd::{memfd_create, MemFdCreateFlag},
+            Error,
         };
-        match memfd_create("shm-vrb", MFD_CLOEXEC) {
+        use std::ffi::CStr;
+        let filename = CStr::from_bytes_with_nul(b"shm-vrb\0").unwrap();
+        match memfd_create(filename, MemFdCreateFlag::MFD_CLOEXEC) {
             Err(Error::Sys(Errno::ENOSYS)) => shm_open_anonymous_posix(),
             value => value,
         }
