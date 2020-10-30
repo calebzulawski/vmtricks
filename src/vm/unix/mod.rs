@@ -83,10 +83,11 @@ impl<T> Drop for MirroredAllocation<T> {
     fn drop(&mut self) {
         if !self.as_mut_ptr().is_null() {
             unsafe {
-                let _ = nix::sys::mman::munmap(
+                nix::sys::mman::munmap(
                     self.ptr as *mut _,
                     2 * self.size * core::mem::size_of::<T>(),
-                );
+                )
+                .unwrap();
             }
         }
     }

@@ -12,4 +12,6 @@ libc = "0.2"
 nix = "0.19"
 
 [target.'cfg(windows)'.dependencies]
-winapi = { version = "0.3", features = ["winbase", "winnt", "handleapi", "sysinfoapi", "errhandlingapi"] }
+# Must use the std feature, otherwise c_void has incorrect repr and pointer arithmetic doesn't work
+# https://github.com/retep998/winapi-rs/issues/950
+winapi = { version = "0.3", features = ["std", "winbase", "winnt", "handleapi", "sysinfoapi", "errhandlingapi", "memoryapi"] }
