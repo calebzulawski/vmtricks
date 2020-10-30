@@ -1,14 +1,10 @@
 mod shm_open_anonymous;
+use super::MirroredAllocation;
 use nix::Result;
 
 pub fn page_size() -> usize {
     use nix::unistd::{sysconf, SysconfVar};
     sysconf(SysconfVar::PAGE_SIZE).unwrap().unwrap() as usize
-}
-
-pub struct MirroredAllocation<T> {
-    ptr: *mut T,
-    size: usize,
 }
 
 impl<T> MirroredAllocation<T> {
@@ -68,14 +64,6 @@ impl<T> MirroredAllocation<T> {
 
             Ok(mirrored)
         }
-    }
-
-    pub fn as_mut_ptr(&self) -> *mut T {
-        self.ptr
-    }
-
-    pub fn len(&self) -> usize {
-        self.size
     }
 }
 

@@ -1,3 +1,4 @@
+use super::MirroredAllocation;
 use crate::error::windows::Error;
 use std::convert::TryInto;
 use winapi::{
@@ -90,11 +91,6 @@ unsafe fn unmap_view_of_file(address: *mut c_void) -> Result<(), Error> {
     }
 }
 
-pub struct MirroredAllocation<T> {
-    ptr: *mut T,
-    size: usize,
-}
-
 impl<T> Drop for MirroredAllocation<T> {
     fn drop(&mut self) {
         if !self.ptr.is_null() {
@@ -166,13 +162,5 @@ impl<T> MirroredAllocation<T> {
 
             Ok(mirrored)
         }
-    }
-
-    pub fn as_mut_ptr(&self) -> *mut T {
-        self.ptr
-    }
-
-    pub fn len(&self) -> usize {
-        self.size
     }
 }

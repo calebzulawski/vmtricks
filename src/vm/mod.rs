@@ -6,27 +6,18 @@ mod unix;
 #[cfg(windows)]
 mod windows;
 
-mod implementation {
-    #[cfg(unix)]
-    pub use super::unix::MirroredAllocation;
-
-    #[cfg(windows)]
-    pub use super::windows::MirroredAllocation;
+pub struct MirroredAllocation<T> {
+    ptr: *mut T,
+    size: usize,
 }
 
-pub struct MirroredAllocation<T>(implementation::MirroredAllocation<T>);
-
 impl<T> MirroredAllocation<T> {
-    pub fn new(size: usize) -> Result<Self, crate::error::SystemError> {
-        Ok(Self(implementation::MirroredAllocation::new(size)?))
-    }
-
     pub fn as_mut_ptr(&self) -> *mut T {
-        self.0.as_mut_ptr()
+        self.ptr
     }
 
     pub fn len(&self) -> usize {
-        self.0.len()
+        self.size
     }
 
     pub fn is_empty(&self) -> bool {
