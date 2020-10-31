@@ -2,61 +2,81 @@
 
 #[cfg(unix)]
 mod unix;
+#[cfg(unix)]
+use unix as implementation;
 
 #[cfg(windows)]
 mod windows;
+#[cfg(windows)]
+use windows as implementation;
 
-pub struct MirroredAllocation<T> {
-    ptr: *mut T,
-    size: usize,
+/// Returns the system's page size.
+pub fn page_size() -> usize {
+    implementation::page_size()
 }
 
-impl<T> MirroredAllocation<T> {
-    pub fn as_mut_ptr(&self) -> *mut T {
-        self.ptr
-    }
-
-    pub fn len(&self) -> usize {
-        self.size
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.len() == 0
-    }
+/// Returns the system's allocation size.
+pub fn allocation_size() -> usize {
+    implementation::allocation_size()
 }
 
-impl<T> Default for MirroredAllocation<T> {
-    fn default() -> Self {
-        Self::new(0).unwrap()
-    }
+/// Allocates a region of memory double `size`, such that the first `size` bytes are also
+/// accessible via the second `size` bytes.
+///
+/// # Panics
+/// Panics if `size` is not a multiple of [`allocation_size`](fn.allocation_size.html).
+pub fn allocate_mirrored(size: usize) -> Result<*mut u8, crate::SystemError> {
+    implementation::allocate_mirrored(size)
+}
+
+/// Deallocates a mirrored memory region.
+///
+/// # Safety
+/// `address` must be a pointer returned by calling
+/// [`allocate_mirrored`](fn.allocate_mirrored.html) with `size`.
+pub unsafe fn deallocate_mirrored(address: *mut u8, size: usize) -> Result<(), crate::SystemError> {
+    implementation::deallocate_mirrored(address, size)
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
 
+    struct Mirrored(*mut u8, usize);
+
+    impl Drop for Mirrored {
+        fn drop(&mut self) {
+            unsafe { deallocate_mirrored(self.0, self.1).unwrap() }
+        }
+    }
+
+    impl Mirrored {
+        fn new(size: usize) -> Self {
+            Self(allocate_mirrored(size).unwrap(), size)
+        }
+    }
+
     #[test]
-    fn default() {
-        let mirrored = MirroredAllocation::<u8>::default();
-        assert!(mirrored.as_mut_ptr().is_null());
-        assert!(mirrored.is_empty());
+    fn zero_size() {
+        let mirrored = Mirrored::new(0);
+        assert!(mirrored.0.is_null());
     }
 
     #[test]
     fn assorted_sizes() {
         fn test_impl(size: usize) {
-            let mirrored = MirroredAllocation::<u8>::new(size).unwrap();
-            assert!(!mirrored.as_mut_ptr().is_null());
-            assert!(mirrored.len() >= size);
+            let mirrored = Mirrored::new(size);
+            assert!(!mirrored.0.is_null());
         }
 
-        test_impl(100);
-        test_impl(4000);
-        test_impl(4096);
-        test_impl(4100);
-        test_impl(65000);
-        test_impl(65536);
-        test_impl(66000);
-        test_impl(1000000);
+        test_impl(allocation_size());
+        test_impl(2 * allocation_size());
+        test_impl(100 * allocation_size());
+    }
+
+    #[test]
+    #[should_panic]
+    fn invalid_size() {
+        Mirrored::new(allocation_size() / 2);
     }
 }

@@ -43,6 +43,7 @@ pub(crate) mod windows {
     }
 }
 
+/// Indicates a system error, such as out-of-memory.
 #[derive(Debug)]
 pub struct SystemError(#[cfg(unix)] nix::Error, #[cfg(windows)] windows::Error);
 
