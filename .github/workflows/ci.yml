@@ -50,7 +50,7 @@ jobs:
       run: cargo install cross
     - name: Run tests
       run: |
-        cross +nightly test
+        cross +nightly test --target ${{ matrix.target }}
 
 
   cross-tier2:
@@ -71,7 +71,7 @@ jobs:
       run: cargo install cross
     - name: Run tests
       run: |
-        cross +nightly build
+        cross +nightly build --target ${{ matrix.target }}
 
 
   lint:
